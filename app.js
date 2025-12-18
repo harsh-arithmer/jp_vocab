@@ -754,6 +754,10 @@ async function main() {
   const directionSelect = byId("directionSelect");
   const onlyDueToggle = byId("onlyDueToggle");
   const resetSessionBtn = byId("resetSessionBtn");
+  const deckSelectMobile = byId("deckSelectMobile");
+  const directionSelectMobile = byId("directionSelectMobile");
+  const onlyDueToggleMobile = byId("onlyDueToggleMobile");
+  const resetSessionBtnMobile = byId("resetSessionBtnMobile");
 
   const statsEl = byId("stats");
   const progressRingEl = byId("progressRing");
@@ -1445,6 +1449,8 @@ async function main() {
       deckSelect.appendChild(opt);
     }
     deckSelect.value = settings.deckId;
+    deckSelectMobile.innerHTML = deckSelect.innerHTML;
+    deckSelectMobile.value = settings.deckId;
   };
 
   const reloadCards = async () => {
@@ -1481,6 +1487,7 @@ async function main() {
 
   deckSelect.addEventListener("change", async () => {
     settings.deckId = deckSelect.value;
+    deckSelectMobile.value = settings.deckId;
     saveAll();
     sessionSeenIds = new Set();
     await reloadCards();
@@ -1488,12 +1495,14 @@ async function main() {
 
   directionSelect.addEventListener("change", () => {
     settings.direction = directionSelect.value;
+    directionSelectMobile.value = settings.direction;
     saveAll();
     renderCard();
   });
 
   onlyDueToggle.addEventListener("change", async () => {
     settings.onlyDue = onlyDueToggle.checked;
+    onlyDueToggleMobile.checked = settings.onlyDue;
     saveAll();
     sessionSeenIds = new Set();
     await reloadCards();
@@ -1595,6 +1604,39 @@ async function main() {
 
   resetSessionBtn.addEventListener("click", () => {
     sessionSeenIds = new Set();
+    nextCard();
+  });
+
+  // Mobile session controls (in side sheet)
+  directionSelectMobile.value = settings.direction;
+  onlyDueToggleMobile.checked = settings.onlyDue;
+
+  deckSelectMobile.addEventListener("change", async () => {
+    settings.deckId = deckSelectMobile.value;
+    deckSelect.value = settings.deckId;
+    saveAll();
+    sessionSeenIds = new Set();
+    await reloadCards();
+  });
+
+  directionSelectMobile.addEventListener("change", () => {
+    settings.direction = directionSelectMobile.value;
+    directionSelect.value = settings.direction;
+    saveAll();
+    renderCard();
+  });
+
+  onlyDueToggleMobile.addEventListener("change", async () => {
+    settings.onlyDue = onlyDueToggleMobile.checked;
+    onlyDueToggle.checked = settings.onlyDue;
+    saveAll();
+    sessionSeenIds = new Set();
+    await reloadCards();
+  });
+
+  resetSessionBtnMobile.addEventListener("click", () => {
+    sessionSeenIds = new Set();
+    setSideOpen(false);
     nextCard();
   });
 

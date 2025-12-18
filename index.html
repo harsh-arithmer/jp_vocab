@@ -20,12 +20,12 @@
 
       <div class="controls">
         <button id="menuBtn" class="btn btn--ghost controls__menu" type="button">Menu</button>
-        <label class="control">
+        <label class="control desktopOnly">
           <span class="control__label">Deck</span>
           <select id="deckSelect"></select>
         </label>
 
-        <label class="control">
+        <label class="control desktopOnly">
           <span class="control__label">Direction</span>
           <select id="directionSelect">
             <option value="jp_to_en">JP → EN</option>
@@ -33,12 +33,12 @@
           </select>
         </label>
 
-        <label class="control control--toggle">
+        <label class="control control--toggle desktopOnly">
           <input id="onlyDueToggle" type="checkbox" />
           <span>Only due</span>
         </label>
 
-        <button id="resetSessionBtn" class="btn btn--ghost" type="button">Reset session</button>
+        <button id="resetSessionBtn" class="btn btn--ghost desktopOnly" type="button">Reset session</button>
       </div>
     </header>
 
@@ -108,6 +108,27 @@
         </div>
 
         <div class="progressBlocks">
+          <div class="progressBlock mobileOnly">
+            <div class="progressBlock__title">Session</div>
+            <div class="progressBlock__body">
+              <label class="control control--inline">
+                <span class="control__label">Deck</span>
+                <select id="deckSelectMobile"></select>
+              </label>
+              <label class="control control--inline">
+                <span class="control__label">Direction</span>
+                <select id="directionSelectMobile">
+                  <option value="jp_to_en">JP → EN</option>
+                  <option value="en_to_jp">EN → JP</option>
+                </select>
+              </label>
+              <label class="control control--toggleRow">
+                <input id="onlyDueToggleMobile" type="checkbox" />
+                <span>Only due</span>
+              </label>
+              <button id="resetSessionBtnMobile" class="btn btn--ghost" type="button">Reset session</button>
+            </div>
+          </div>
           <div class="progressBlock">
             <div class="progressBlock__title">Lists</div>
             <div class="progressBlock__body">
