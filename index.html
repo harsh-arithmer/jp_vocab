@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JP Vocab Trainer</title>
+    <meta name="theme-color" content="#0b1020" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="assets/icon-192.png" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">JP Vocab Trainer</div>
+        <div class="brand__sub">Interactive review + progress tracking (local)</div>
+      </div>
+
+      <div class="controls">
+        <button id="menuBtn" class="btn btn--ghost controls__menu" type="button">Menu</button>
+        <label class="control">
+          <span class="control__label">Deck</span>
+          <select id="deckSelect"></select>
+        </label>
+
+        <label class="control">
+          <span class="control__label">Direction</span>
+          <select id="directionSelect">
+            <option value="jp_to_en">JP → EN</option>
+            <option value="en_to_jp">EN → JP</option>
+          </select>
+        </label>
+
+        <label class="control control--toggle">
+          <input id="onlyDueToggle" type="checkbox" />
+          <span>Only due</span>
+        </label>
+
+        <button id="resetSessionBtn" class="btn btn--ghost" type="button">Reset session</button>
+      </div>
+    </header>
+
+    <div class="sideOverlay" id="sideOverlay" hidden></div>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="statsRow">
+          <div class="progressRing" id="progressRing" aria-label="Progress ring"></div>
+          <div class="stats" id="stats"></div>
+        </div>
+
+        <div class="card" id="card" role="button" tabindex="0" aria-label="Flip card">
+          <div class="card__meta" id="cardMeta"></div>
+          <div class="card__flip">
+            <div class="card__flipInner">
+              <div class="card__face card__face--front">
+                <div class="card__faceContent card__front" id="cardFront"></div>
+              </div>
+              <div class="card__face card__face--back">
+                <div class="card__faceContent card__back" id="cardBack"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card__hint" id="cardHint"></div>
+        </div>
+
+        <div class="actions">
+          <button id="speakJpBtn" class="btn btn--ghost" type="button" title="Text-to-speech (Japanese) (J)">Speak JP (J)</button>
+          <button id="speakEnBtn" class="btn btn--ghost" type="button" title="Text-to-speech (English) (E)">Speak EN (E)</button>
+          <button id="revealBtn" class="btn btn--primary" type="button">Show answer (Space)</button>
+          <button id="nextBtn" class="btn" type="button" disabled>Next</button>
+        </div>
+
+        <div class="typing" id="typingArea">
+          <div class="typing__row">
+            <input id="answerInput" class="textInput typing__input" type="text" placeholder="Type your answer…" />
+            <button id="checkBtn" class="btn btn--primary" type="button">Check (Enter)</button>
+            <button id="clearBtn" class="btn btn--ghost" type="button">Clear</button>
+          </div>
+          <div class="typing__feedback" id="typingFeedback" aria-live="polite"></div>
+        </div>
+
+        <div class="mcq" id="mcqArea">
+          <div class="mcq__prompt muted">Choose the correct answer:</div>
+          <div class="mcq__options" id="mcqOptions" role="list"></div>
+          <div class="mcq__feedback" id="mcqFeedback" aria-live="polite"></div>
+        </div>
+
+        <div class="grades" id="grades">
+          <button class="btn btn--bad" data-grade="again" type="button">Again (1)</button>
+          <button class="btn btn--ok" data-grade="hard" type="button">Hard (2)</button>
+          <button class="btn btn--good" data-grade="good" type="button">Good (3)</button>
+          <button class="btn btn--great" data-grade="easy" type="button">Easy (4)</button>
+        </div>
+      </section>
+
+      <aside class="panel panel--side">
+        <div class="side__header">
+          <div class="side__title">Progress</div>
+          <div class="side__actions">
+            <button id="installAppBtn" class="btn btn--ghost" type="button" hidden>Install</button>
+            <button id="exportBtn" class="btn btn--ghost" type="button">Export</button>
+            <label class="btn btn--ghost" for="importFile">Import</label>
+            <input id="importFile" type="file" accept="application/json" hidden />
+          </div>
+        </div>
+
+        <div class="progressBlocks">
+          <div class="progressBlock">
+            <div class="progressBlock__title">Lists</div>
+            <div class="progressBlock__body">
+              <label class="control control--inline">
+                <span class="control__label">Filter</span>
+                <input id="listFilterInput" class="textInput" type="text" placeholder="Search JP/EN…" />
+              </label>
+            </div>
+          </div>
+          <div class="progressBlock">
+            <div class="progressBlock__title">
+              Unknown (keep reminding) <span class="badge" id="unknownCount"></span>
+            </div>
+            <div class="progressBlock__body" id="unknownList"></div>
+          </div>
+          <div class="progressBlock">
+            <div class="progressBlock__title">Due now <span class="badge" id="dueCount"></span></div>
+            <div class="progressBlock__body" id="dueList"></div>
+          </div>
+          <div class="progressBlock">
+          <div class="progressBlock__title">Settings</div>
+          <div class="progressBlock__body">
+              <label class="control control--toggleRow">
+                <input id="showReadingToggle" type="checkbox" />
+                <span>Show reading (hiragana)</span>
+              </label>
+              <label class="control control--toggleRow">
+                <input id="showExamplesToggle" type="checkbox" />
+                <span>Show examples</span>
+              </label>
+              <label class="control control--toggleRow">
+                <input id="typingModeToggle" type="checkbox" />
+                <span>Typing mode</span>
+              </label>
+              <label class="control control--toggleRow">
+                <input id="autoSpeakToggle" type="checkbox" />
+                <span>Auto-speak JP on reveal</span>
+              </label>
+              <label class="control control--inline">
+                <span class="control__label">Daily goal</span>
+                <input id="dailyGoalInput" class="textInput textInput--small" type="number" min="1" max="500" step="1" />
+              </label>
+            </div>
+          </div>
+          <div class="progressBlock">
+            <div class="progressBlock__title">Local File (optional)</div>
+            <div class="progressBlock__body">
+              <label class="control control--toggleRow">
+                <input id="fileSyncToggle" type="checkbox" />
+                <span>Auto-save progress to a local file</span>
+              </label>
+              <div class="typing__row">
+                <button id="pickProgressFileBtn" class="btn btn--ghost" type="button">Pick file</button>
+                <button id="writeProgressFileBtn" class="btn btn--ghost" type="button">Write now</button>
+                <button id="forgetProgressFileBtn" class="btn btn--ghost" type="button">Forget</button>
+              </div>
+              <div class="muted" id="fileSyncStatus"></div>
+            </div>
+          </div>
+          <div class="progressBlock">
+            <div class="progressBlock__title">Analytics</div>
+            <div class="progressBlock__body">
+              <div id="analytics"></div>
+            </div>
+          </div>
+          <div class="progressBlock">
+            <div class="progressBlock__title">Quiz</div>
+            <div class="progressBlock__body">
+              <label class="control control--inline">
+                <span class="control__label">Questions</span>
+                <input id="quizCountInput" class="textInput textInput--small" type="number" min="1" max="200" step="1" />
+              </label>
+              <label class="control control--inline">
+                <span class="control__label">Source</span>
+                <select id="quizSourceSelect">
+                  <option value="due">Due</option>
+                  <option value="unknown">Unknown</option>
+                  <option value="all">All</option>
+                </select>
+              </label>
+              <label class="control control--inline">
+                <span class="control__label">Mode</span>
+                <select id="quizModeSelect">
+                  <option value="mcq">MCQ</option>
+                  <option value="typing">Typing</option>
+                </select>
+              </label>
+              <label class="control control--toggleRow">
+                <input id="quizAffectsSrsToggle" type="checkbox" />
+                <span>Quiz updates SRS (recommended)</span>
+              </label>
+              <label class="control control--toggleRow">
+                <input id="quizAutoAdvanceToggle" type="checkbox" />
+                <span>Auto-advance on correct</span>
+              </label>
+              <div class="typing__row">
+                <button id="startQuizBtn" class="btn btn--primary" type="button">Start quiz</button>
+                <button id="stopQuizBtn" class="btn btn--ghost" type="button" disabled>Stop</button>
+              </div>
+              <div class="quizStatus" id="quizStatus"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footerHelp">
+          <div>
+            <span class="kbd">Space</span> flip • <span class="kbd">Enter</span> check • <span class="kbd">1–4</span> grade •
+            <span class="kbd">J</span>/<span class="kbd">E</span> speak
+          </div>
+          <div class="muted">Swipe: up reveal • left again • right good • down hard • up easy (revealed)</div>
+          <div class="muted">Progress is saved in your browser (localStorage).</div>
+        </div>
+      </aside>
+    </main>
+
+    <div class="toast" id="hintToast" hidden>
+      <div class="toast__title">Quick controls</div>
+      <div class="toast__body">
+        Swipe up to reveal. When revealed: left Again, down Hard, right Good, up Easy. Press <span class="kbd">J</span>/<span class="kbd">E</span> to speak.
+      </div>
+      <div class="toast__actions">
+        <button id="hintToastCloseBtn" class="btn btn--ghost" type="button">Got it</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

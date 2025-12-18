@@ -1,0 +1,18 @@
+{
+  "sourceFile": "vocab_master.csv",
+  "decks": [
+    { "id": "all", "title": "All decks" },
+    { "id": "01_core_ml_concepts", "title": "01 - Core ML concepts" },
+    { "id": "02_deep_learning_nn", "title": "02 - Deep learning & NN" },
+    { "id": "03_nlp_llm", "title": "03 - NLP & LLM" },
+    { "id": "04_metrics_validation", "title": "04 - Metrics & validation" },
+    { "id": "05_data_experimentation", "title": "05 - Data & experimentation" },
+    { "id": "06_mlops_systems", "title": "06 - MLOps & systems" },
+    { "id": "07_project_communication", "title": "07 - Project communication" },
+    { "id": "08_cv_vision", "title": "08 - CV / vision" },
+    { "id": "09_recommender_systems", "title": "09 - Recommender systems" },
+    { "id": "10_security_privacy", "title": "10 - Security & privacy" },
+    { "id": "11_meeting_phrases", "title": "11 - Meeting phrases" }
+  ]
+}
+
