@@ -1,5 +1,32 @@
-.env.local
+# Local env files
+.env
+.env.*
+!.env.local.example
+
+# Personal/local progress exports
+jp_vocab_progress*.json
+
+# Tool caches
 .cache/
 __pycache__/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
+# Virtualenvs
+.venv/
+venv/
+
+# Editor/OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+*.log
+
+# Node (not used currently, but safe)
+node_modules/
