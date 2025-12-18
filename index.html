@@ -19,7 +19,7 @@
       </div>
 
       <div class="controls">
-        <button id="menuBtn" class="btn btn--ghost controls__menu" type="button">Menu</button>
+        <button id="menuBtn" class="btn btn--ghost controls__menu" type="button" aria-label="Menu">Menu</button>
         <label class="control desktopOnly">
           <span class="control__label">Deck</span>
           <select id="deckSelect"></select>
@@ -46,6 +46,7 @@
 
     <main class="layout">
       <section class="panel">
+        <div class="reviewMiniBar mobileOnly" id="reviewMiniBar" aria-label="Review status"></div>
         <div class="statsRow">
           <div class="progressRing" id="progressRing" aria-label="Progress ring"></div>
           <div class="stats" id="stats"></div>
@@ -98,7 +99,7 @@
 
       <aside class="panel panel--side">
         <div class="side__header">
-          <div class="side__title">Progress</div>
+          <div class="side__title" id="sideTitle">Progress</div>
           <div class="side__actions">
             <button id="installAppBtn" class="btn btn--ghost" type="button" hidden>Install</button>
             <button id="exportBtn" class="btn btn--ghost" type="button">Export</button>
@@ -108,7 +109,7 @@
         </div>
 
         <div class="progressBlocks">
-          <div class="progressBlock mobileOnly">
+          <div class="progressBlock mobileOnly" data-tab="settings">
             <div class="progressBlock__title">Session</div>
             <div class="progressBlock__body">
               <label class="control control--inline">
@@ -129,7 +130,7 @@
               <button id="resetSessionBtnMobile" class="btn btn--ghost" type="button">Reset session</button>
             </div>
           </div>
-          <div class="progressBlock">
+          <div class="progressBlock" data-tab="lists">
             <div class="progressBlock__title">Lists</div>
             <div class="progressBlock__body">
               <label class="control control--inline">
@@ -138,19 +139,19 @@
               </label>
             </div>
           </div>
-          <div class="progressBlock">
+          <div class="progressBlock" data-tab="lists">
             <div class="progressBlock__title">
               Unknown (keep reminding) <span class="badge" id="unknownCount"></span>
             </div>
             <div class="progressBlock__body" id="unknownList"></div>
           </div>
-          <div class="progressBlock">
+          <div class="progressBlock" data-tab="lists">
             <div class="progressBlock__title">Due now <span class="badge" id="dueCount"></span></div>
             <div class="progressBlock__body" id="dueList"></div>
           </div>
-          <div class="progressBlock">
-          <div class="progressBlock__title">Settings</div>
-          <div class="progressBlock__body">
+          <div class="progressBlock" data-tab="settings">
+            <div class="progressBlock__title">Settings</div>
+            <div class="progressBlock__body">
               <label class="control control--toggleRow">
                 <input id="showReadingToggle" type="checkbox" />
                 <span>Show reading (hiragana)</span>
@@ -164,6 +165,10 @@
                 <span>Typing mode</span>
               </label>
               <label class="control control--toggleRow">
+                <input id="singleHandToggle" type="checkbox" />
+                <span>Single-hand mode (mobile)</span>
+              </label>
+              <label class="control control--toggleRow">
                 <input id="autoSpeakToggle" type="checkbox" />
                 <span>Auto-speak JP on reveal</span>
               </label>
@@ -173,7 +178,7 @@
               </label>
             </div>
           </div>
-          <div class="progressBlock">
+          <div class="progressBlock" data-tab="settings">
             <div class="progressBlock__title">Local File (optional)</div>
             <div class="progressBlock__body">
               <label class="control control--toggleRow">
@@ -188,13 +193,13 @@
               <div class="muted" id="fileSyncStatus"></div>
             </div>
           </div>
-          <div class="progressBlock">
+          <div class="progressBlock" data-tab="stats">
             <div class="progressBlock__title">Analytics</div>
             <div class="progressBlock__body">
               <div id="analytics"></div>
             </div>
           </div>
-          <div class="progressBlock">
+          <div class="progressBlock" data-tab="quiz">
             <div class="progressBlock__title">Quiz</div>
             <div class="progressBlock__body">
               <label class="control control--inline">
@@ -252,6 +257,30 @@
       <div class="toast__actions">
         <button id="hintToastCloseBtn" class="btn btn--ghost" type="button">Got it</button>
       </div>
+    </div>
+
+    <nav class="tabbar mobileOnly" id="tabbar" aria-label="Bottom navigation">
+      <button class="tabbar__btn" type="button" data-tab="review" aria-label="Review">
+        <span class="tabbar__label">Review</span>
+      </button>
+      <button class="tabbar__btn" type="button" data-tab="quiz" aria-label="Quiz">
+        <span class="tabbar__label">Quiz</span>
+      </button>
+      <button class="tabbar__btn" type="button" data-tab="lists" aria-label="Lists">
+        <span class="tabbar__label">Lists</span>
+      </button>
+      <button class="tabbar__btn" type="button" data-tab="stats" aria-label="Stats">
+        <span class="tabbar__label">Stats</span>
+      </button>
+      <button class="tabbar__btn" type="button" data-tab="settings" aria-label="Settings">
+        <span class="tabbar__label">Settings</span>
+      </button>
+    </nav>
+
+    <div class="thumbBar mobileOnly" id="thumbBar" hidden>
+      <button id="thumbRevealBtn" class="btn btn--primary thumbBar__btn" type="button">Reveal</button>
+      <button id="thumbAgainBtn" class="btn btn--bad thumbBar__btn" type="button">Again</button>
+      <button id="thumbGoodBtn" class="btn btn--good thumbBar__btn" type="button">Good</button>
     </div>
 
     <script src="app.js"></script>

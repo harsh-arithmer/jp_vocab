@@ -18,6 +18,7 @@ Then open `http://localhost:8000/`.
 - Open the URL on your Android phone in Chrome:
   - Tap **Install** in the app (right panel), or Chrome menu → **Install app**
 - The app works offline after first load (service worker cache) and progress stays local to the device.
+- Mobile UI: use the bottom tabs (**Review / Quiz / Lists / Stats / Settings**). Settings includes **Single-hand mode**.
 
 ### GitHub Pages (recommended)
 

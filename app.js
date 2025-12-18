@@ -781,6 +781,13 @@ async function main() {
   const mcqFeedback = byId("mcqFeedback");
   const hintToast = maybeById("hintToast");
   const hintToastCloseBtn = maybeById("hintToastCloseBtn");
+  const reviewMiniBar = byId("reviewMiniBar");
+  const sideTitle = byId("sideTitle");
+  const tabbar = byId("tabbar");
+  const thumbBar = byId("thumbBar");
+  const thumbRevealBtn = byId("thumbRevealBtn");
+  const thumbAgainBtn = byId("thumbAgainBtn");
+  const thumbGoodBtn = byId("thumbGoodBtn");
   const unknownListEl = byId("unknownList");
   const dueListEl = byId("dueList");
   const unknownCountEl = byId("unknownCount");
@@ -789,6 +796,7 @@ async function main() {
   const showReadingToggle = byId("showReadingToggle");
   const showExamplesToggle = byId("showExamplesToggle");
   const typingModeToggle = byId("typingModeToggle");
+  const singleHandToggle = byId("singleHandToggle");
   const autoSpeakToggle = byId("autoSpeakToggle");
   const dailyGoalInput = byId("dailyGoalInput");
   const analyticsEl = byId("analytics");
@@ -823,6 +831,8 @@ async function main() {
     dailyGoal: 30,
     fileSyncEnabled: false,
     sideOpen: false,
+    mobileTab: "review",
+    singleHand: false,
   });
   const hints = ensureHintsShape(loadJson(STORAGE_HINTS_KEY, null));
 
@@ -939,6 +949,50 @@ async function main() {
     document.body.classList.toggle("is-sideOpen", !!settings.sideOpen);
     sideOverlay.hidden = !settings.sideOpen;
     saveAll();
+  };
+
+  const isMobile = () => window.matchMedia?.("(max-width: 980px)")?.matches ?? false;
+
+  const setMiniCollapsed = (collapsed) => {
+    document.body.classList.toggle("is-miniCollapsed", !!collapsed);
+  };
+
+  const setMobileTab = (tab) => {
+    const allowed = new Set(["review", "quiz", "lists", "stats", "settings"]);
+    const next = allowed.has(tab) ? tab : "review";
+    settings.mobileTab = next;
+    document.body.dataset.mobileTab = next;
+    for (const btn of tabbar.querySelectorAll("[data-tab]")) {
+      btn.classList.toggle("is-active", btn.getAttribute("data-tab") === next);
+    }
+    const titles = {
+      review: "Review",
+      quiz: "Quiz",
+      lists: "Lists",
+      stats: "Stats",
+      settings: "Settings",
+    };
+    sideTitle.textContent = titles[next] || "Progress";
+    // Close legacy side sheet, if any.
+    setSideOpen(false);
+    // Update single-hand class only in Review tab.
+    document.body.classList.toggle("is-singleHand", next === "review" && !!settings.singleHand && !quiz.active);
+    setMiniCollapsed(false);
+    saveAll();
+    renderCard();
+    refreshSideLists();
+  };
+
+  const onMobileScroll = () => {
+    if (!isMobile()) return;
+    if (settings.mobileTab !== "review") return;
+    const y = window.scrollY || 0;
+    const faces = cardEl.querySelectorAll?.(".card__face") ?? [];
+    let faceScroll = 0;
+    for (const el of faces) {
+      faceScroll = Math.max(faceScroll, el.scrollTop || 0);
+    }
+    setMiniCollapsed(y > 12 || faceScroll > 24);
   };
 
   const saveHints = () => {
@@ -1074,9 +1128,44 @@ async function main() {
         <div class="listMini">${hardest || `<div class=\"muted\">No lapses yet.</div>`}</div>
       </div>
     `;
+
+    // Mobile review mini bar
+    if (isMobile()) {
+      const deckName =
+        settings.deckId === "all"
+          ? "All decks"
+          : deckConfig.decks.find((d) => d.id === settings.deckId)?.title || settings.deckId;
+      const dirLabel = settings.direction === "en_to_jp" ? "EN→JP" : "JP→EN";
+      reviewMiniBar.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+          <div style="min-width:0">
+            <div style="font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(
+              deckName,
+            )}</div>
+            <div class="muted" style="font-size:12px">${escapeHtml(dirLabel)} • due ${counts.dueNow} • unknown ${
+              counts.unknown
+            }</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:850">${todayReviewed}/${goal}</div>
+            <div class="muted" style="font-size:12px">today</div>
+          </div>
+        </div>
+      `;
+    }
   };
 
   const setRevealed = (nextRevealed) => {
+    const updateThumbUi = () => {
+      const enabled = isMobile() && settings.mobileTab === "review" && !!settings.singleHand && !quiz.active;
+      document.body.classList.toggle("is-singleHand", enabled);
+      thumbBar.hidden = !enabled;
+      if (!enabled) return;
+      thumbRevealBtn.textContent = revealed ? "Skip" : "Reveal";
+      thumbAgainBtn.classList.toggle("is-muted", !revealed);
+      thumbGoodBtn.classList.toggle("is-muted", !revealed);
+    };
+
     revealed = nextRevealed;
     if (revealed) {
       cardEl.classList.add("is-revealed");
@@ -1105,6 +1194,8 @@ async function main() {
         cardHintEl.textContent = settings.typingMode ? "Type your answer, then Enter" : "Click to reveal (or Space)";
       }
     }
+
+    updateThumbUi();
   };
 
   const renderCard = () => {
@@ -1166,6 +1257,7 @@ async function main() {
     mcqOptions.innerHTML = "";
 
     setRevealed(false);
+
     if (settings.typingMode) setTimeout(() => answerInput.focus(), 0);
 
     if (quiz.active && quiz.mode === "mcq") renderMcq();
@@ -1474,6 +1566,7 @@ async function main() {
   showReadingToggle.checked = settings.showReading !== false;
   showExamplesToggle.checked = settings.showExamples !== false;
   typingModeToggle.checked = settings.typingMode !== false;
+  singleHandToggle.checked = !!settings.singleHand;
   autoSpeakToggle.checked = !!settings.autoSpeak;
   dailyGoalInput.value = String(settings.dailyGoal ?? 30);
   fileSyncToggle.checked = !!settings.fileSyncEnabled;
@@ -1484,6 +1577,12 @@ async function main() {
   quizAutoAdvanceToggle.checked = true;
   updateFileUi();
   updateQuizUi();
+
+  // Mobile tab initialization
+  document.body.dataset.mobileTab = settings.mobileTab || "review";
+  if (isMobile()) setMobileTab(settings.mobileTab || "review");
+  window.addEventListener("scroll", onMobileScroll, { passive: true });
+  cardEl.querySelectorAll(".card__face").forEach((el) => el.addEventListener("scroll", onMobileScroll, { passive: true }));
 
   deckSelect.addEventListener("change", async () => {
     settings.deckId = deckSelect.value;
@@ -1529,6 +1628,14 @@ async function main() {
     settings.typingMode = typingModeToggle.checked;
     saveAll();
     renderCard();
+  });
+
+  singleHandToggle.addEventListener("change", () => {
+    settings.singleHand = singleHandToggle.checked;
+    saveAll();
+    // Re-apply mobile classes and thumb UI
+    if (isMobile()) setMobileTab(settings.mobileTab || "review");
+    else document.body.classList.remove("is-singleHand");
   });
 
   autoSpeakToggle.addEventListener("change", () => {
@@ -1607,6 +1714,13 @@ async function main() {
     nextCard();
   });
 
+  tabbar.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("[data-tab]");
+    if (!btn) return;
+    const tab = btn.getAttribute("data-tab");
+    setMobileTab(tab);
+  });
+
   // Mobile session controls (in side sheet)
   directionSelectMobile.value = settings.direction;
   onlyDueToggleMobile.checked = settings.onlyDue;
@@ -1636,7 +1750,7 @@ async function main() {
 
   resetSessionBtnMobile.addEventListener("click", () => {
     sessionSeenIds = new Set();
-    setSideOpen(false);
+    setMobileTab("review");
     nextCard();
   });
 
@@ -1647,6 +1761,74 @@ async function main() {
       return;
     }
     skipCurrent();
+  });
+
+  const bindLongPress = (button, { onTap, onLongPress, longMs = 520 }) => {
+    let timer = null;
+    let didLong = false;
+    const clear = () => {
+      if (timer) clearTimeout(timer);
+      timer = null;
+    };
+    button.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") return; // long-press is for touch
+      didLong = false;
+      clear();
+      timer = setTimeout(() => {
+        didLong = true;
+        onLongPress?.();
+      }, longMs);
+    });
+    button.addEventListener("pointerup", () => {
+      clear();
+      if (!didLong) onTap?.();
+      didLong = false;
+    });
+    button.addEventListener("pointercancel", () => {
+      clear();
+      didLong = false;
+    });
+  };
+
+  thumbRevealBtn.addEventListener("click", () => {
+    if (!isMobile()) return;
+    if (settings.mobileTab !== "review") return;
+    if (!settings.singleHand) return;
+    if (!currentCard) return;
+    if (quiz.active) return;
+    if (revealed) {
+      skipCurrent();
+    } else {
+      setRevealed(true);
+    }
+  });
+
+  bindLongPress(thumbAgainBtn, {
+    onTap: () => {
+      if (!currentCard || quiz.active) return;
+      if (!revealed) return setRevealed(true);
+      gradeCurrent("again");
+    },
+    onLongPress: () => {
+      if (!currentCard || quiz.active) return;
+      if (!revealed) setRevealed(true);
+      cardHintEl.textContent = "Hard (long-press Again)";
+      gradeCurrent("hard");
+    },
+  });
+
+  bindLongPress(thumbGoodBtn, {
+    onTap: () => {
+      if (!currentCard || quiz.active) return;
+      if (!revealed) return setRevealed(true);
+      gradeCurrent("good");
+    },
+    onLongPress: () => {
+      if (!currentCard || quiz.active) return;
+      if (!revealed) setRevealed(true);
+      cardHintEl.textContent = "Easy (long-press Good)";
+      gradeCurrent("easy");
+    },
   });
 
   if (hintToastCloseBtn) hintToastCloseBtn.addEventListener("click", dismissQuickControls);
@@ -1864,7 +2046,13 @@ async function main() {
     nextCard();
   });
 
-  menuBtn.addEventListener("click", () => setSideOpen(!settings.sideOpen));
+  menuBtn.addEventListener("click", () => {
+    if (isMobile()) {
+      setMobileTab("settings");
+      return;
+    }
+    setSideOpen(!settings.sideOpen);
+  });
   sideOverlay.addEventListener("click", () => setSideOpen(false));
   window.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
