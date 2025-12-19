@@ -443,11 +443,9 @@ function formatExamples(card, settings) {
     const en = escapeHtml(card.exampleEn);
     const speak = card.exampleJp ? speakButtonHtml(card.exampleJp, "ja-JP", "Speak example 1") : "";
     lines.push(
-      `<div><b>Example 1</b>: <span class="exampleRow">${speak}<span>${jp}</span></span>${
-        hira ? ` <span class="muted">/ ${hira}</span>` : ""
-      }${
-        en ? `<div class="muted">${en}</div>` : ""
-      }</div>`,
+      `<div class="exampleBlock"><b>Example 1</b>: <span class="exampleRow">${speak}<span>${jp}</span></span>${
+        hira ? ` <div class="muted exampleBlock__sub">${hira}</div>` : ""
+      }${en ? `<div class="muted exampleBlock__sub">${en}</div>` : ""}</div>`,
     );
   }
   if (card.example2Jp || card.example2En) {
@@ -456,11 +454,9 @@ function formatExamples(card, settings) {
     const en = escapeHtml(card.example2En);
     const speak = card.example2Jp ? speakButtonHtml(card.example2Jp, "ja-JP", "Speak example 2") : "";
     lines.push(
-      `<div><b>Example 2</b>: <span class="exampleRow">${speak}<span>${jp}</span></span>${
-        hira ? ` <span class="muted">/ ${hira}</span>` : ""
-      }${
-        en ? `<div class="muted">${en}</div>` : ""
-      }</div>`,
+      `<div class="exampleBlock"><b>Example 2</b>: <span class="exampleRow">${speak}<span>${jp}</span></span>${
+        hira ? ` <div class="muted exampleBlock__sub">${hira}</div>` : ""
+      }${en ? `<div class="muted exampleBlock__sub">${en}</div>` : ""}</div>`,
     );
   }
   if (card.example3Jp || card.example3En) {
@@ -469,14 +465,12 @@ function formatExamples(card, settings) {
     const en = escapeHtml(card.example3En);
     const speak = card.example3Jp ? speakButtonHtml(card.example3Jp, "ja-JP", "Speak example 3") : "";
     lines.push(
-      `<div><b>Example 3</b>: <span class="exampleRow">${speak}<span>${jp}</span></span>${
-        hira ? ` <span class="muted">/ ${hira}</span>` : ""
-      }${
-        en ? `<div class="muted">${en}</div>` : ""
-      }</div>`,
+      `<div class="exampleBlock"><b>Example 3</b>: <span class="exampleRow">${speak}<span>${jp}</span></span>${
+        hira ? ` <div class="muted exampleBlock__sub">${hira}</div>` : ""
+      }${en ? `<div class="muted exampleBlock__sub">${en}</div>` : ""}</div>`,
     );
   }
-  return lines.join('<div style="height:10px"></div>');
+  return lines.join("");
 }
 
 function cardBackHtml(card, direction, settings) {
@@ -761,6 +755,8 @@ async function main() {
 
   const statsEl = byId("stats");
   const progressRingEl = byId("progressRing");
+  const statsStatsEl = byId("statsStats");
+  const progressRingStatsEl = byId("progressRingStats");
   const cardEl = byId("card");
   const cardMetaEl = byId("cardMeta");
   const cardFrontEl = byId("cardFront");
@@ -1050,16 +1046,20 @@ async function main() {
     dueCountEl.textContent = String(dueCards.length);
 
     const todayReviewed = getTodayReviewed(progress, now);
-    renderStats(statsEl, {
+    const countsForStats = {
       ...counts,
       streak: progress.streak.count,
       todayReviewed,
-    });
+    };
+    renderStats(statsEl, countsForStats);
+    renderStats(statsStatsEl, countsForStats);
 
     const goal = Math.max(1, Number(settings.dailyGoal || 30));
     const pct = clamp(Math.round((todayReviewed / goal) * 100), 0, 100);
     progressRingEl.style.background = `conic-gradient(rgba(110,231,255,0.95) ${pct}%, rgba(255,255,255,0.08) 0)`;
     progressRingEl.innerHTML = `<div class="progressRing__label"><div><b>${todayReviewed}/${goal}</b>Today</div></div>`;
+    progressRingStatsEl.style.background = progressRingEl.style.background;
+    progressRingStatsEl.innerHTML = progressRingEl.innerHTML;
 
     const { correct, wrong } = getTodayCorrectWrong(progress, now);
     const acc = correct + wrong > 0 ? Math.round((correct / (correct + wrong)) * 100) : 0;
@@ -1142,9 +1142,7 @@ async function main() {
             <div style="font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(
               deckName,
             )}</div>
-            <div class="muted" style="font-size:12px">${escapeHtml(dirLabel)} • due ${counts.dueNow} • unknown ${
-              counts.unknown
-            }</div>
+            <div class="muted" style="font-size:12px">${escapeHtml(dirLabel)}</div>
           </div>
           <div style="text-align:right">
             <div style="font-weight:850">${todayReviewed}/${goal}</div>
@@ -1258,7 +1256,8 @@ async function main() {
 
     setRevealed(false);
 
-    if (settings.typingMode) setTimeout(() => answerInput.focus(), 0);
+    // Mobile: don't auto-focus the input when moving between cards (prevents keyboard popping up).
+    if (settings.typingMode && !isMobile()) setTimeout(() => answerInput.focus(), 0);
 
     if (quiz.active && quiz.mode === "mcq") renderMcq();
   };
@@ -1874,7 +1873,13 @@ async function main() {
     });
   }
 
-  checkBtn.addEventListener("click", () => runTypedCheck());
+  checkBtn.addEventListener("click", () => {
+    if (isMobile() && settings.typingMode && !String(answerInput.value || "").trim()) {
+      answerInput.focus();
+      return;
+    }
+    runTypedCheck();
+  });
   clearBtn.addEventListener("click", () => {
     answerInput.value = "";
     typingFeedback.textContent = "";

@@ -445,6 +445,23 @@ body {
   min-width: 0;
 }
 
+.exampleBlock {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.exampleBlock:first-child {
+  margin-top: 0;
+}
+
+.exampleBlock__sub {
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
 .iconBtn {
   display: inline-grid;
   place-items: center;
@@ -852,6 +869,11 @@ body {
     display: none !important;
   }
 
+  /* Hide the big stat pills in Review; show them under the Stats tab instead */
+  .statsRow {
+    display: none;
+  }
+
   body[data-mobile-tab="review"] .panel--side {
     display: none;
   }
@@ -1016,8 +1038,12 @@ body {
   }
 
   .card {
-    min-height: 44dvh;
+    min-height: 52dvh;
     padding: 14px;
+  }
+
+  body[data-mobile-tab="review"] .card {
+    min-height: 60dvh;
   }
 
   .actions {
@@ -1052,6 +1078,16 @@ body {
     padding: 12px 14px;
     border-radius: 16px;
   }
+}
+
+.statsRow--compact {
+  grid-template-columns: 64px 1fr;
+  align-items: start;
+}
+
+.progressRing--small {
+  width: 64px;
+  height: 64px;
 }
 
 @media (prefers-reduced-motion: reduce) {
