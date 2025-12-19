@@ -330,6 +330,16 @@ body {
   display: grid;
 }
 
+.is-quiz .mcq__prompt {
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.is-quiz .mcq__prompt b {
+  color: rgba(110, 231, 255, 0.95);
+}
+
 .mcq__options {
   display: grid;
   gap: 10px;
@@ -953,6 +963,34 @@ body {
     display: block;
   }
 
+  /* Quiz: show settings + question on the same page */
+  body[data-mobile-tab="quiz"] .layout {
+    padding: 12px;
+  }
+  body[data-mobile-tab="quiz"] .layout > section.panel {
+    display: block;
+  }
+  body[data-mobile-tab="quiz"] .reviewMiniBar {
+    display: none;
+  }
+  body[data-mobile-tab="quiz"] .statsRow {
+    display: none;
+  }
+  body[data-mobile-tab="quiz"] .panel--side {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    max-width: none;
+    transition: none;
+    overflow: visible;
+    z-index: auto;
+  }
+
   .tabbar {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -1005,6 +1043,20 @@ body {
 
   .panel {
     padding: 12px;
+  }
+
+  .mcqOpt {
+    padding: 14px 14px;
+    border-radius: 16px;
+  }
+  .mcqOpt__key {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .mcq__feedback {
+    font-size: 14px;
   }
 
   .panel--side .progressBlocks {

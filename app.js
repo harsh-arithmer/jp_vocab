@@ -772,11 +772,12 @@ async function main() {
   const checkBtn = byId("checkBtn");
   const clearBtn = byId("clearBtn");
   const typingFeedback = byId("typingFeedback");
-  const mcqArea = byId("mcqArea");
-  const mcqOptions = byId("mcqOptions");
-  const mcqFeedback = byId("mcqFeedback");
-  const hintToast = maybeById("hintToast");
-  const hintToastCloseBtn = maybeById("hintToastCloseBtn");
+	  const mcqArea = byId("mcqArea");
+	  const mcqOptions = byId("mcqOptions");
+	  const mcqFeedback = byId("mcqFeedback");
+	  const mcqPromptEl = mcqArea.querySelector(".mcq__prompt");
+	  const hintToast = maybeById("hintToast");
+	  const hintToastCloseBtn = maybeById("hintToastCloseBtn");
   const reviewMiniBar = byId("reviewMiniBar");
   const sideTitle = byId("sideTitle");
   const tabbar = byId("tabbar");
@@ -942,7 +943,8 @@ async function main() {
     saveAll();
   };
 
-  const isMobile = () => window.matchMedia?.("(max-width: 980px)")?.matches ?? false;
+	  const isMobile = () => window.matchMedia?.("(max-width: 980px)")?.matches ?? false;
+	  const isQuizTab = () => isMobile() && (settings.mobileTab || "review") === "quiz";
 
   const setMiniCollapsed = (collapsed) => {
     document.body.classList.toggle("is-miniCollapsed", !!collapsed);
@@ -1146,17 +1148,17 @@ async function main() {
     }
   };
 
-  const setRevealed = (nextRevealed) => {
-    revealed = nextRevealed;
-    if (revealed) {
-      cardEl.classList.add("is-revealed");
-      gradesEl.classList.add("is-enabled");
-      revealBtn.disabled = true;
-      if (quiz.active) {
-        cardHintEl.textContent = quiz.currentRecorded
-          ? "Tap Next question to continue"
-          : quiz.mode === "mcq"
-            ? "Answer shown — choose 1–4 to answer, or Skip"
+	  const setRevealed = (nextRevealed) => {
+	    revealed = nextRevealed;
+	    if (revealed) {
+	      cardEl.classList.add("is-revealed");
+	      gradesEl.classList.add("is-enabled");
+	      revealBtn.disabled = !quiz.active && !isQuizTab();
+	      if (quiz.active) {
+	        cardHintEl.textContent = quiz.currentRecorded
+	          ? "Tap Next question to continue"
+	          : quiz.mode === "mcq"
+	            ? "Answer shown — choose 1–4 to answer, or Skip"
             : "Answer shown — Enter to Check (scores), or Next to skip";
       } else {
         if (isMobile()) {
@@ -1170,10 +1172,10 @@ async function main() {
         }
       }
       if (settings.autoSpeak && currentCard?.japanese) speakText(currentCard.japanese, "ja-JP");
-    } else {
-      cardEl.classList.remove("is-revealed");
-      gradesEl.classList.remove("is-enabled");
-      revealBtn.disabled = false;
+	    } else {
+	      cardEl.classList.remove("is-revealed");
+	      gradesEl.classList.remove("is-enabled");
+	      revealBtn.disabled = false;
       if (quiz.active) {
         cardHintEl.textContent =
           quiz.mode === "mcq"
@@ -1189,7 +1191,7 @@ async function main() {
     }
   };
 
-  const renderCard = () => {
+	  const renderCard = () => {
     if (!currentCard) {
       if (quiz.finishedSummary) {
         cardMetaEl.textContent = "Quiz finished";
@@ -1214,16 +1216,18 @@ async function main() {
     const now = Date.now();
     const state = getCardState(progress, currentCard.id, now);
     const dueText = state.dueAt <= now ? "due now" : `due in ${formatShortTime(state.dueAt - now)}`;
-    const quizText = quiz.active ? ` • QUIZ ${quiz.index + 1}/${quiz.ids.length}` : "";
-    cardMetaEl.textContent = `${currentCard.deckTitle} • ${state.status} • ${dueText}${quizText}`;
+	    const quizText = quiz.active
+	      ? ` • QUIZ ${quiz.index + 1}/${quiz.ids.length} • ${quiz.correct}✓ ${quiz.wrong}✗ (skip ${quiz.skipped})`
+	      : "";
+	    cardMetaEl.textContent = `${currentCard.deckTitle} • ${state.status} • ${dueText}${quizText}`;
 
-    if (quiz.active) {
-      revealBtn.disabled = true;
-      revealBtn.textContent = "Show answer (disabled in quiz)";
-    } else {
-      revealBtn.disabled = false;
-      revealBtn.textContent = "Show answer (Space)";
-    }
+	    if (quiz.active) {
+	      revealBtn.disabled = false;
+	      revealBtn.textContent = "Stop quiz";
+	    } else {
+	      revealBtn.disabled = false;
+	      revealBtn.textContent = isQuizTab() ? "Start quiz" : "Show answer (Space)";
+	    }
 
     cardFrontEl.innerHTML = cardFrontHtml(currentCard, settings.direction, settings);
     cardBackEl.innerHTML = cardBackHtml(currentCard, settings.direction, settings);
@@ -1399,13 +1403,24 @@ async function main() {
     return { choiceIds, correctIndex };
   };
 
-  const renderMcq = () => {
-    if (!quiz.active || quiz.mode !== "mcq" || !currentCard) return;
-    quiz.mcq = buildMcq(currentCard);
-    if (!quiz.mcq) {
-      mcqOptions.innerHTML = `<div class="muted">Not enough unique options for MCQ in this deck. Switch Quiz Mode to Typing.</div>`;
-      return;
-    }
+	  const renderMcq = () => {
+	    if (!quiz.active || quiz.mode !== "mcq" || !currentCard) return;
+	    if (mcqPromptEl) {
+	      if (settings.direction === "jp_to_en") {
+	        const jp = currentCard.japanese || currentCard.front || "";
+	        const speak = jp && canSpeak() ? speakButtonHtml(jp, "ja-JP", "Speak question") : "";
+	        mcqPromptEl.innerHTML = `<div class="termRow">${speak}<div><b>Meaning?</b> ${escapeHtml(jp)}</div></div>`;
+	      } else {
+	        const en = currentCard.english || "";
+	        const speak = en && canSpeak() ? speakButtonHtml(en, "en-US", "Speak question") : "";
+	        mcqPromptEl.innerHTML = `<div class="termRow">${speak}<div><b>Japanese?</b> ${escapeHtml(en)}</div></div>`;
+	      }
+	    }
+	    quiz.mcq = buildMcq(currentCard);
+	    if (!quiz.mcq) {
+	      mcqOptions.innerHTML = `<div class="muted">Not enough unique options for MCQ in this deck. Switch Quiz Mode to Typing.</div>`;
+	      return;
+	    }
     const keys = ["1", "2", "3", "4"];
     mcqOptions.innerHTML = quiz.mcq.choiceIds
       .map((id, idx) => {
@@ -1429,16 +1444,18 @@ async function main() {
       .join("");
   };
 
-  const selectMcq = (idx) => {
-    if (!quiz.active || quiz.mode !== "mcq") return;
-    if (!currentCard) return;
-    if (quiz.currentRecorded) return;
-    if (!quiz.mcq) return;
-    const correct = idx === quiz.mcq.correctIndex;
-    applyQuizResult(correct, { skipped: false });
-    quiz.currentRecorded = true;
-    setRevealed(true);
-    nextBtn.textContent = "Next question";
+	  const selectMcq = (idx) => {
+	    if (!quiz.active || quiz.mode !== "mcq") return;
+	    if (!currentCard) return;
+	    if (quiz.currentRecorded) return;
+	    if (!quiz.mcq) return;
+	    const correct = idx === quiz.mcq.correctIndex;
+	    const correctLabel = optionLabelForCard(currentCard);
+	    const correctText = correctLabel?.main ? `Correct: ${correctLabel.main}` : "";
+	    applyQuizResult(correct, { skipped: false });
+	    quiz.currentRecorded = true;
+	    setRevealed(true);
+	    nextBtn.textContent = "Next question";
 
     const buttons = Array.from(mcqOptions.querySelectorAll(".mcqOpt"));
     for (const [i, btn] of buttons.entries()) {
@@ -1446,12 +1463,12 @@ async function main() {
       btn.classList.toggle("is-correct", i === quiz.mcq.correctIndex);
       btn.classList.toggle("is-wrong", i === idx && idx !== quiz.mcq.correctIndex);
     }
-    mcqFeedback.textContent = correct ? "Correct." : "Wrong.";
-    mcqFeedback.classList.toggle("is-correct", correct);
-    mcqFeedback.classList.toggle("is-wrong", !correct);
-    if (quiz.autoAdvance && correct) {
-      setTimeout(() => {
-        if (quiz.active && quiz.currentRecorded) nextQuizCard();
+	    mcqFeedback.textContent = correct ? "Correct." : `Wrong. ${correctText}`;
+	    mcqFeedback.classList.toggle("is-correct", correct);
+	    mcqFeedback.classList.toggle("is-wrong", !correct);
+	    if (quiz.autoAdvance && correct) {
+	      setTimeout(() => {
+	        if (quiz.active && quiz.currentRecorded) nextQuizCard();
       }, 450);
     }
   };
@@ -1757,7 +1774,14 @@ async function main() {
     if (isMobile()) setMobileTab("review");
   });
 
-  revealBtn.addEventListener("click", () => setRevealed(true));
+	  revealBtn.addEventListener("click", () => {
+	    if (isQuizTab()) {
+	      if (quiz.active) stopQuizBtn.click();
+	      else startQuizBtn.click();
+	      return;
+	    }
+	    setRevealed(true);
+	  });
   nextBtn.addEventListener("click", () => {
     if (quiz.active && quiz.currentRecorded) {
       nextQuizCard();
@@ -1985,6 +2009,7 @@ async function main() {
       saveAll();
     }
     renderCard();
+    if (isMobile()) window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   });
 
   stopQuizBtn.addEventListener("click", () => {
