@@ -914,15 +914,16 @@ body {
   body[data-mobile-tab]:not([data-mobile-tab="review"]) .layout {
     padding: 0;
   }
-  body[data-mobile-tab]:not([data-mobile-tab="review"]) .panel {
+  body[data-mobile-tab]:not([data-mobile-tab="review"]) .layout > section.panel {
     display: none;
   }
   body[data-mobile-tab]:not([data-mobile-tab="review"]) .panel--side {
+    display: grid;
     position: fixed;
     left: 0;
     right: 0;
     top: 0;
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: calc(var(--mobile-tabbar-height) + var(--mobile-tabbar-gap) + 20px + env(safe-area-inset-bottom));
     border-radius: 0;
     border-left: 0;
     border-right: 0;
@@ -1021,7 +1022,7 @@ body {
 
   .actions {
     position: sticky;
-    bottom: calc(var(--mobile-tabbar-height) + var(--mobile-tabbar-gap) + env(safe-area-inset-bottom) + 92px);
+    bottom: calc(var(--mobile-tabbar-height) + var(--mobile-tabbar-gap) + env(safe-area-inset-bottom));
     background: rgba(11, 16, 32, 0.45);
     backdrop-filter: blur(10px);
     padding: 10px;
@@ -1032,6 +1033,7 @@ body {
   }
 
   .grades {
+    display: none;
     position: sticky;
     bottom: calc(var(--mobile-tabbar-height) + var(--mobile-tabbar-gap) + env(safe-area-inset-bottom));
     background: rgba(11, 16, 32, 0.55);

@@ -1159,7 +1159,15 @@ async function main() {
             ? "Answer shown — choose 1–4 to answer, or Skip"
             : "Answer shown — Enter to Check (scores), or Next to skip";
       } else {
-        cardHintEl.textContent = lastTyped?.ok ? "Looks correct — grade 3/4 (or swipe right/up)" : "Grade yourself (1–4)";
+        if (isMobile()) {
+          if (settings.typingMode && lastTyped.message) {
+            cardHintEl.textContent = lastTyped.ok ? "Correct — tap Next" : "Wrong — tap Next";
+          } else {
+            cardHintEl.textContent = "Tap Next to continue";
+          }
+        } else {
+          cardHintEl.textContent = lastTyped?.ok ? "Looks correct — grade 3/4 (or swipe right/up)" : "Grade yourself (1–4)";
+        }
       }
       if (settings.autoSpeak && currentCard?.japanese) speakText(currentCard.japanese, "ja-JP");
     } else {
@@ -1172,7 +1180,11 @@ async function main() {
             ? "Quiz (MCQ): press 1–4 to answer • Next to skip"
             : "Quiz (Typing): type your answer, then Enter to check • Next to skip";
       } else {
-        cardHintEl.textContent = settings.typingMode ? "Type your answer, then Enter" : "Click to reveal (or Space)";
+        if (settings.typingMode) {
+          cardHintEl.textContent = isMobile() ? "Type your answer, then tap Check" : "Type your answer, then Enter";
+        } else {
+          cardHintEl.textContent = isMobile() ? "Tap to reveal" : "Click to reveal (or Space)";
+        }
       }
     }
   };
@@ -1492,7 +1504,11 @@ async function main() {
     typingFeedback.classList.toggle("is-correct", res.ok);
     typingFeedback.classList.toggle("is-wrong", !res.ok);
     setRevealed(true);
-    cardHintEl.textContent = res.ok ? "Looks correct — grade 3/4 (or swipe right/up)" : "Wrong — grade 1 (Again)";
+    if (!quiz.active && isMobile()) {
+      cardHintEl.textContent = res.ok ? "Correct — tap Next" : "Wrong — tap Next";
+    } else {
+      cardHintEl.textContent = res.ok ? "Looks correct — grade 3/4 (or swipe right/up)" : "Wrong — grade 1 (Again)";
+    }
     if (quiz.active) {
       if (!quiz.currentRecorded) {
         applyQuizResult(res.ok, { skipped: false });
@@ -1746,6 +1762,16 @@ async function main() {
     if (quiz.active && quiz.currentRecorded) {
       nextQuizCard();
       return;
+    }
+    if (!quiz.active && isMobile()) {
+      if (settings.typingMode && lastTyped.message) {
+        gradeCurrent(lastTyped.ok ? "good" : "again");
+        return;
+      }
+      if (revealed) {
+        gradeCurrent("good");
+        return;
+      }
     }
     skipCurrent();
   });
