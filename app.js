@@ -780,19 +780,15 @@ async function main() {
   const reviewMiniBar = byId("reviewMiniBar");
   const sideTitle = byId("sideTitle");
   const tabbar = byId("tabbar");
-  const thumbBar = byId("thumbBar");
-  const thumbRevealBtn = byId("thumbRevealBtn");
-  const thumbAgainBtn = byId("thumbAgainBtn");
-  const thumbGoodBtn = byId("thumbGoodBtn");
   const unknownListEl = byId("unknownList");
   const dueListEl = byId("dueList");
   const unknownCountEl = byId("unknownCount");
   const dueCountEl = byId("dueCount");
   const listFilterInput = byId("listFilterInput");
+  const listDeckSelect = byId("listDeckSelect");
   const showReadingToggle = byId("showReadingToggle");
   const showExamplesToggle = byId("showExamplesToggle");
   const typingModeToggle = byId("typingModeToggle");
-  const singleHandToggle = byId("singleHandToggle");
   const autoSpeakToggle = byId("autoSpeakToggle");
   const dailyGoalInput = byId("dailyGoalInput");
   const analyticsEl = byId("analytics");
@@ -828,7 +824,6 @@ async function main() {
     fileSyncEnabled: false,
     sideOpen: false,
     mobileTab: "review",
-    singleHand: false,
   });
   const hints = ensureHintsShape(loadJson(STORAGE_HINTS_KEY, null));
 
@@ -971,8 +966,6 @@ async function main() {
     sideTitle.textContent = titles[next] || "Progress";
     // Close legacy side sheet, if any.
     setSideOpen(false);
-    // Update single-hand class only in Review tab.
-    document.body.classList.toggle("is-singleHand", next === "review" && !!settings.singleHand && !quiz.active);
     setMiniCollapsed(false);
     saveAll();
     renderCard();
@@ -1154,16 +1147,6 @@ async function main() {
   };
 
   const setRevealed = (nextRevealed) => {
-    const updateThumbUi = () => {
-      const enabled = isMobile() && settings.mobileTab === "review" && !!settings.singleHand && !quiz.active;
-      document.body.classList.toggle("is-singleHand", enabled);
-      thumbBar.hidden = !enabled;
-      if (!enabled) return;
-      thumbRevealBtn.textContent = revealed ? "Skip" : "Reveal";
-      thumbAgainBtn.classList.toggle("is-muted", !revealed);
-      thumbGoodBtn.classList.toggle("is-muted", !revealed);
-    };
-
     revealed = nextRevealed;
     if (revealed) {
       cardEl.classList.add("is-revealed");
@@ -1192,8 +1175,6 @@ async function main() {
         cardHintEl.textContent = settings.typingMode ? "Type your answer, then Enter" : "Click to reveal (or Space)";
       }
     }
-
-    updateThumbUi();
   };
 
   const renderCard = () => {
@@ -1542,6 +1523,8 @@ async function main() {
     deckSelect.value = settings.deckId;
     deckSelectMobile.innerHTML = deckSelect.innerHTML;
     deckSelectMobile.value = settings.deckId;
+    listDeckSelect.innerHTML = deckSelect.innerHTML;
+    listDeckSelect.value = settings.deckId;
   };
 
   const reloadCards = async () => {
@@ -1565,7 +1548,6 @@ async function main() {
   showReadingToggle.checked = settings.showReading !== false;
   showExamplesToggle.checked = settings.showExamples !== false;
   typingModeToggle.checked = settings.typingMode !== false;
-  singleHandToggle.checked = !!settings.singleHand;
   autoSpeakToggle.checked = !!settings.autoSpeak;
   dailyGoalInput.value = String(settings.dailyGoal ?? 30);
   fileSyncToggle.checked = !!settings.fileSyncEnabled;
@@ -1586,6 +1568,7 @@ async function main() {
   deckSelect.addEventListener("change", async () => {
     settings.deckId = deckSelect.value;
     deckSelectMobile.value = settings.deckId;
+    listDeckSelect.value = settings.deckId;
     saveAll();
     sessionSeenIds = new Set();
     await reloadCards();
@@ -1627,14 +1610,6 @@ async function main() {
     settings.typingMode = typingModeToggle.checked;
     saveAll();
     renderCard();
-  });
-
-  singleHandToggle.addEventListener("change", () => {
-    settings.singleHand = singleHandToggle.checked;
-    saveAll();
-    // Re-apply mobile classes and thumb UI
-    if (isMobile()) setMobileTab(settings.mobileTab || "review");
-    else document.body.classList.remove("is-singleHand");
   });
 
   autoSpeakToggle.addEventListener("change", () => {
@@ -1727,6 +1702,7 @@ async function main() {
   deckSelectMobile.addEventListener("change", async () => {
     settings.deckId = deckSelectMobile.value;
     deckSelect.value = settings.deckId;
+    listDeckSelect.value = settings.deckId;
     saveAll();
     sessionSeenIds = new Set();
     await reloadCards();
@@ -1753,6 +1729,18 @@ async function main() {
     nextCard();
   });
 
+  // Lists tab "vocab type/topic" selector
+  listDeckSelect.value = settings.deckId;
+  listDeckSelect.addEventListener("change", async () => {
+    settings.deckId = listDeckSelect.value;
+    deckSelect.value = settings.deckId;
+    deckSelectMobile.value = settings.deckId;
+    saveAll();
+    sessionSeenIds = new Set();
+    await reloadCards();
+    if (isMobile()) setMobileTab("review");
+  });
+
   revealBtn.addEventListener("click", () => setRevealed(true));
   nextBtn.addEventListener("click", () => {
     if (quiz.active && quiz.currentRecorded) {
@@ -1760,74 +1748,6 @@ async function main() {
       return;
     }
     skipCurrent();
-  });
-
-  const bindLongPress = (button, { onTap, onLongPress, longMs = 520 }) => {
-    let timer = null;
-    let didLong = false;
-    const clear = () => {
-      if (timer) clearTimeout(timer);
-      timer = null;
-    };
-    button.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") return; // long-press is for touch
-      didLong = false;
-      clear();
-      timer = setTimeout(() => {
-        didLong = true;
-        onLongPress?.();
-      }, longMs);
-    });
-    button.addEventListener("pointerup", () => {
-      clear();
-      if (!didLong) onTap?.();
-      didLong = false;
-    });
-    button.addEventListener("pointercancel", () => {
-      clear();
-      didLong = false;
-    });
-  };
-
-  thumbRevealBtn.addEventListener("click", () => {
-    if (!isMobile()) return;
-    if (settings.mobileTab !== "review") return;
-    if (!settings.singleHand) return;
-    if (!currentCard) return;
-    if (quiz.active) return;
-    if (revealed) {
-      skipCurrent();
-    } else {
-      setRevealed(true);
-    }
-  });
-
-  bindLongPress(thumbAgainBtn, {
-    onTap: () => {
-      if (!currentCard || quiz.active) return;
-      if (!revealed) return setRevealed(true);
-      gradeCurrent("again");
-    },
-    onLongPress: () => {
-      if (!currentCard || quiz.active) return;
-      if (!revealed) setRevealed(true);
-      cardHintEl.textContent = "Hard (long-press Again)";
-      gradeCurrent("hard");
-    },
-  });
-
-  bindLongPress(thumbGoodBtn, {
-    onTap: () => {
-      if (!currentCard || quiz.active) return;
-      if (!revealed) return setRevealed(true);
-      gradeCurrent("good");
-    },
-    onLongPress: () => {
-      if (!currentCard || quiz.active) return;
-      if (!revealed) setRevealed(true);
-      cardHintEl.textContent = "Easy (long-press Good)";
-      gradeCurrent("easy");
-    },
   });
 
   if (hintToastCloseBtn) hintToastCloseBtn.addEventListener("click", dismissQuickControls);

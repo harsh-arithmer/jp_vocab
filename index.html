@@ -143,6 +143,10 @@
             <div class="progressBlock__title">Lists</div>
             <div class="progressBlock__body">
               <label class="control control--inline">
+                <span class="control__label">Vocab type (topic)</span>
+                <select id="listDeckSelect"></select>
+              </label>
+              <label class="control control--inline">
                 <span class="control__label">Filter</span>
                 <input id="listFilterInput" class="textInput" type="text" placeholder="Search JP/EN…" />
               </label>
@@ -172,10 +176,6 @@
               <label class="control control--toggleRow">
                 <input id="typingModeToggle" type="checkbox" />
                 <span>Typing mode</span>
-              </label>
-              <label class="control control--toggleRow">
-                <input id="singleHandToggle" type="checkbox" />
-                <span>Single-hand mode (mobile)</span>
               </label>
               <label class="control control--toggleRow">
                 <input id="autoSpeakToggle" type="checkbox" />
@@ -285,12 +285,6 @@
         <span class="tabbar__label">Settings</span>
       </button>
     </nav>
-
-    <div class="thumbBar mobileOnly" id="thumbBar" hidden>
-      <button id="thumbRevealBtn" class="btn btn--primary thumbBar__btn" type="button">Reveal</button>
-      <button id="thumbAgainBtn" class="btn btn--bad thumbBar__btn" type="button">Again</button>
-      <button id="thumbGoodBtn" class="btn btn--good thumbBar__btn" type="button">Good</button>
-    </div>
 
     <script src="app.js"></script>
   </body>

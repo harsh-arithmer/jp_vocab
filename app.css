@@ -87,10 +87,6 @@ body {
   display: none;
 }
 
-.thumbBar {
-  display: none;
-}
-
 .sideOverlay {
   position: fixed;
   inset: 0;
@@ -875,7 +871,7 @@ body {
   }
 
   /* Hide the big stat pills in Review; show them under the Stats tab instead */
-  .statsRow {
+  body[data-mobile-tab="review"] .statsRow {
     display: none;
   }
 
@@ -990,36 +986,7 @@ body {
   }
 
   /* Single-hand mode */
-  body.is-singleHand .actions,
-  body.is-singleHand .grades {
-    display: none;
-  }
-
-  body.is-singleHand .thumbBar {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr;
-    gap: 10px;
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: calc(var(--mobile-tabbar-height) + var(--mobile-tabbar-gap) + env(safe-area-inset-bottom));
-    z-index: 13;
-    padding: 10px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(10, 14, 30, 0.78);
-    backdrop-filter: blur(12px);
-  }
-
-  .thumbBar__btn {
-    width: 100%;
-    padding: 14px 10px;
-    font-size: 15px;
-  }
-
-  .thumbBar__btn.is-muted {
-    opacity: 0.85;
-  }
+  /* (removed single-hand thumb bar) */
   .layout {
     grid-template-columns: 1fr;
     padding: 12px;
